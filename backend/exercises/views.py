@@ -11,7 +11,7 @@ import sqlite3
 import sqlparse
 from django.db import connections
 from django.db.models import Avg, Count
-
+from rest_framework import status
 
 # Fonction pour extraire le texte d’un PDF
 def extract_text_from_pdf(file_path):
@@ -90,20 +90,21 @@ class SubmissionCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        if not request.user.is_student:
-            return Response({'error': 'Seuls les étudiants peuvent soumettre'}, status=403)
+        # Vérifier que l'utilisateur est un étudiant et non un professeur
+        if not request.user.is_student or request.user.is_professor:
+            return Response({'error': 'Seuls les étudiants peuvent soumettre'}, status=status.HTTP_403_FORBIDDEN)
+        
         serializer = SubmissionSerializer(data=request.data)
         if serializer.is_valid():
             submission = serializer.save(student=request.user)
             content = submission.content or ""
             if submission.file:
                 content = extract_text_from_pdf(submission.file.path)
-            
+
             # Validation SQL si contenu présent
             if content.strip():
                 is_valid, sql_feedback = validate_sql(content)
                 if is_valid and submission.exercise.expected_sql:
-                    # Comparaison avec la réponse attendue
                     expected = submission.exercise.expected_sql.strip()
                     if content.strip().lower() == expected.lower():
                         submission.grade = 10.0
@@ -111,21 +112,18 @@ class SubmissionCreateView(APIView):
                     else:
                         success, results = execute_sql(content)
                         if success:
-                            submission.grade = 7.0  # Note partielle si exécutable
-                            submission.feedback = f"Requête exécutable mais différente de la réponse attendue : {results}"
+                            submission.grade = 7.0
+                            submission.feedback = f"Requête exécutable mais différente : {results}"
                         else:
                             submission.grade = 3.0
                             submission.feedback = f"Requête invalide : {results}"
-                
                 else:
-                    # Évaluation par Ollama si pas de réponse SQL attendue
                     grade, feedback = evaluate_with_ollama(content, submission.exercise.description)
                     submission.grade = grade
                     submission.feedback = feedback if is_valid else f"Syntaxe SQL invalide : {sql_feedback}"
-            
             submission.save()
-            return Response(SubmissionSerializer(submission).data, status=201)
-        return Response(serializer.errors, status=400)
+            return Response(SubmissionSerializer(submission).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
     
 class SubmissionListView(APIView):
     permission_classes = [IsAuthenticated]
