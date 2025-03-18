@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function Login() {
+function Login({ onLoginSuccess }) {  // Ajoutez onLoginSuccess comme prop
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -15,8 +15,9 @@ function Login() {
       });
       const data = await response.json();
       if (data.access) {
-        localStorage.setItem('token', data.access); // Stocke le token
-        setMessage(data.message);
+        localStorage.setItem('token', data.access);  // Stocke le token
+        setMessage(data.message);                    // Affiche le message
+        onLoginSuccess();                            // Appelle la fonction pour rediriger
       } else {
         setMessage(data.error);
       }
