@@ -7,6 +7,7 @@ class Exercise(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_professor': True})
     created_at = models.DateTimeField(auto_now_add=True)
     file = models.FileField(upload_to='exercises/', null=True, blank=True)
+    expected_sql = models.TextField(null=True, blank=True)  # Nouvelle colonne pour la requête attendue
 
     def __str__(self):
         return self.title

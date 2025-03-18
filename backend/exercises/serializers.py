@@ -7,8 +7,8 @@ class ExerciseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exercise
-        fields = ['id', 'title', 'description', 'created_by', 'created_at', 'file']
-
+        fields = ['id', 'title', 'description', 'created_by', 'created_at', 'file', 'expected_sql']
+        
 class SubmissionSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)
     exercise = ExerciseSerializer(read_only=True)

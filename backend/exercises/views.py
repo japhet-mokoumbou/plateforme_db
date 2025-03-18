@@ -7,6 +7,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Exercise, Submission
 from .serializers import ExerciseSerializer, SubmissionSerializer
+import sqlite3
+import sqlparse
+from django.db import connections
 
 
 # Fonction pour extraire le texte d’un PDF
@@ -39,6 +42,29 @@ def evaluate_with_ollama(content, exercise_description):
             return 5.0, 'Erreur dans l’analyse de la réponse IA'
     return 5.0, 'Erreur lors de l’appel à l’IA'
 
+def validate_sql(query):
+    """Valide la syntaxe d’une requête SQL."""
+    try:
+        parsed = sqlparse.parse(query)
+        if not parsed:
+            return False, "Syntaxe invalide"
+        return True, "Syntaxe correcte"
+    except Exception as e:
+        return False, str(e)
+
+def execute_sql(query):
+    """Exécute une requête SQL sur une base de test SQLite."""
+    try:
+        with sqlite3.connect('test_db.sqlite3') as conn:
+            cursor = conn.cursor()
+            cursor.execute("CREATE TABLE IF NOT EXISTS test_table (id INTEGER, name TEXT)")
+            cursor.execute("INSERT INTO test_table (id, name) VALUES (1, 'Test'), (2, 'Example')")
+            cursor.execute(query)
+            results = cursor.fetchall()
+            return True, results
+    except sqlite3.Error as e:
+        return False, str(e)
+
 class ExerciseCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -50,7 +76,7 @@ class ExerciseCreateView(APIView):
             serializer.save(created_by=request.user)
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
-
+    
 class ExerciseListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -68,13 +94,34 @@ class SubmissionCreateView(APIView):
         serializer = SubmissionSerializer(data=request.data)
         if serializer.is_valid():
             submission = serializer.save(student=request.user)
-            # Évaluation automatique
-            content = submission.content
+            content = submission.content or ""
             if submission.file:
                 content = extract_text_from_pdf(submission.file.path)
-            grade, feedback = evaluate_with_ollama(content, submission.exercise.description)
-            submission.grade = grade
-            submission.feedback = feedback
+            
+            # Validation SQL si contenu présent
+            if content.strip():
+                is_valid, sql_feedback = validate_sql(content)
+                if is_valid and submission.exercise.expected_sql:
+                    # Comparaison avec la réponse attendue
+                    expected = submission.exercise.expected_sql.strip()
+                    if content.strip().lower() == expected.lower():
+                        submission.grade = 10.0
+                        submission.feedback = "Requête correcte et identique à la réponse attendue"
+                    else:
+                        success, results = execute_sql(content)
+                        if success:
+                            submission.grade = 7.0  # Note partielle si exécutable
+                            submission.feedback = f"Requête exécutable mais différente de la réponse attendue : {results}"
+                        else:
+                            submission.grade = 3.0
+                            submission.feedback = f"Requête invalide : {results}"
+                
+                else:
+                    # Évaluation par Ollama si pas de réponse SQL attendue
+                    grade, feedback = evaluate_with_ollama(content, submission.exercise.description)
+                    submission.grade = grade
+                    submission.feedback = feedback if is_valid else f"Syntaxe SQL invalide : {sql_feedback}"
+            
             submission.save()
             return Response(SubmissionSerializer(submission).data, status=201)
         return Response(serializer.errors, status=400)

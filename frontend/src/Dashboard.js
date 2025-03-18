@@ -8,6 +8,7 @@ function Dashboard() {
   const [error, setError] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [expectedSql, setExpectedSql] = useState('');  // Nouveau champ
   const [submissionContent, setSubmissionContent] = useState('');
   const [submissionFile, setSubmissionFile] = useState(null);
   const [selectedExercise, setSelectedExercise] = useState(null);
@@ -47,11 +48,12 @@ function Dashboard() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({ title, description, expected_sql: expectedSql }),
       });
       if (response.ok) {
         setTitle('');
         setDescription('');
+        setExpectedSql('');
         alert('Exercice créé !');
       }
     } catch (err) {
@@ -127,6 +129,12 @@ function Dashboard() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
+              <textarea
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Requête SQL attendue (optionnel)"
+                value={expectedSql}
+                onChange={(e) => setExpectedSql(e.target.value)}
+              />
               <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                 Créer
               </button>
@@ -144,11 +152,10 @@ function Dashboard() {
                 onChange={(e) => setSelectedExercise(e.target.value)}
               >
                 <option value="">Sélectionnez un exercice</option>
-                {/* À remplir dynamiquement via ExerciseList */}
               </select>
               <textarea
                 className="w-full p-2 mb-4 border rounded"
-                placeholder="Votre réponse (facultatif)"
+                placeholder="Votre requête SQL ou réponse (facultatif)"
                 value={submissionContent}
                 onChange={(e) => setSubmissionContent(e.target.value)}
               />
