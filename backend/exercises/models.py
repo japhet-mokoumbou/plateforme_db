@@ -18,6 +18,7 @@ class Submission(models.Model):
     content = models.TextField(null=True, blank=True)
     file = models.FileField(upload_to='submissions/', null=True, blank=True)
     grade = models.FloatField(null=True, blank=True)
+    feedback = models.TextField(null=True, blank=True)  # Nouveau champ
 
     def __str__(self):
         return f"{self.student.username} - {self.exercise.title}"

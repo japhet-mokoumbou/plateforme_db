@@ -6,6 +6,9 @@ function Dashboard() {
   const [error, setError] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [submissionContent, setSubmissionContent] = useState('');
+  const [submissionFile, setSubmissionFile] = useState(null);
+  const [selectedExercise, setSelectedExercise] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -54,6 +57,37 @@ function Dashboard() {
     }
   };
 
+  const handleSubmitExercise = async (e) => {
+    e.preventDefault();
+    if (!selectedExercise) {
+      setError('Sélectionnez un exercice');
+      return;
+    }
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('exercise', selectedExercise);
+    if (submissionContent) formData.append('content', submissionContent);
+    if (submissionFile) formData.append('file', submissionFile);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/submissions/create/', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSubmissionContent('');
+        setSubmissionFile(null);
+        alert(`Soumission réussie ! Note : ${data.grade} - ${data.feedback}`);
+      } else {
+        setError(data.error || 'Erreur lors de la soumission');
+      }
+    } catch (err) {
+      setError('Erreur réseau');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -98,7 +132,29 @@ function Dashboard() {
       ) : (
         <div className="bg-white p-4 rounded shadow-md mb-6">
           <h2 className="text-xl font-semibold mb-2">Soumettre un exercice</h2>
-          <p>Sélectionnez un exercice ci-dessous pour soumettre votre réponse.</p>
+          <form onSubmit={handleSubmitExercise}>
+            <select
+              className="w-full p-2 mb-4 border rounded"
+              onChange={(e) => setSelectedExercise(e.target.value)}
+            >
+              <option value="">Sélectionnez un exercice</option>
+              {/* Remplir dynamiquement via ExerciseList */}
+            </select>
+            <textarea
+              className="w-full p-2 mb-4 border rounded"
+              placeholder="Votre réponse (facultatif)"
+              value={submissionContent}
+              onChange={(e) => setSubmissionContent(e.target.value)}
+            />
+            <input
+              type="file"
+              className="w-full mb-4"
+              onChange={(e) => setSubmissionFile(e.target.files[0])}
+            />
+            <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+              Soumettre
+            </button>
+          </form>
         </div>
       )}
       <ExerciseList />
