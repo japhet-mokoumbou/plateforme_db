@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import ExerciseList from './ExerciseList';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -19,15 +22,37 @@ function Dashboard() {
           const data = await response.json();
           setUser(data);
         } else {
-          setError('Session expirée, veuillez vous reconnecter');
+          setError('Session expirée');
           localStorage.removeItem('token');
         }
       } catch (err) {
-        setError('Erreur réseau : ' + err.message);
+        setError('Erreur réseau');
       }
     };
     fetchProfile();
   }, []);
+
+  const handleCreateExercise = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch('http://localhost:8000/api/exercises/create/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, description }),
+      });
+      if (response.ok) {
+        setTitle('');
+        setDescription('');
+        alert('Exercice créé !');
+      }
+    } catch (err) {
+      setError('Erreur lors de la création');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -50,22 +75,33 @@ function Dashboard() {
         </button>
       </div>
       {user.is_professor ? (
-        <div className="bg-white p-4 rounded shadow-md">
-          <h2 className="text-xl font-semibold mb-2">Tableau de bord Professeur</h2>
-          <p>Gérez vos exercices et corrigez les soumissions.</p>
-          <button className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            Créer un exercice
-          </button>
+        <div className="bg-white p-4 rounded shadow-md mb-6">
+          <h2 className="text-xl font-semibold mb-2">Créer un exercice</h2>
+          <form onSubmit={handleCreateExercise}>
+            <input
+              className="w-full p-2 mb-4 border rounded"
+              placeholder="Titre"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <textarea
+              className="w-full p-2 mb-4 border rounded"
+              placeholder="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+              Créer
+            </button>
+          </form>
         </div>
       ) : (
-        <div className="bg-white p-4 rounded shadow-md">
-          <h2 className="text-xl font-semibold mb-2">Tableau de bord Étudiant</h2>
-          <p>Soumettez vos exercices ici.</p>
-          <button className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-            Soumettre un exercice
-          </button>
+        <div className="bg-white p-4 rounded shadow-md mb-6">
+          <h2 className="text-xl font-semibold mb-2">Soumettre un exercice</h2>
+          <p>Sélectionnez un exercice ci-dessous pour soumettre votre réponse.</p>
         </div>
       )}
+      <ExerciseList />
     </div>
   );
 }

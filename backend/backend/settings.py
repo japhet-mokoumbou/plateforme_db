@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'users',
+    'exercises',
     'rest_framework',  # Si vous l’avez déjà installé
    
 ]
