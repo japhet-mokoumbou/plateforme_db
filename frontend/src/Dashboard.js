@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ExerciseList from './ExerciseList';
 import SubmissionHistory from './SubmissionHistory';
+import ProfessorDashboard from './ProfessorDashboard';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -110,57 +111,61 @@ function Dashboard() {
         </button>
       </div>
       {user.is_professor ? (
-        <div className="bg-white p-4 rounded shadow-md mb-6">
-          <h2 className="text-xl font-semibold mb-2">Créer un exercice</h2>
-          <form onSubmit={handleCreateExercise}>
-            <input
-              className="w-full p-2 mb-4 border rounded"
-              placeholder="Titre"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <textarea
-              className="w-full p-2 mb-4 border rounded"
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-              Créer
-            </button>
-          </form>
-        </div>
+        <>
+          <div className="bg-white p-4 rounded shadow-md mb-6">
+            <h2 className="text-xl font-semibold mb-2">Créer un exercice</h2>
+            <form onSubmit={handleCreateExercise}>
+              <input
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Titre"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <textarea
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Créer
+              </button>
+            </form>
+          </div>
+          <ProfessorDashboard />
+        </>
       ) : (
-        <div className="bg-white p-4 rounded shadow-md mb-6">
-          <h2 className="text-xl font-semibold mb-2">Soumettre un exercice</h2>
-          <form onSubmit={handleSubmitExercise}>
-            <select
-              className="w-full p-2 mb-4 border rounded"
-              onChange={(e) => setSelectedExercise(e.target.value)}
-            >
-              <option value="">Sélectionnez un exercice</option>
-              {/* À remplir dynamiquement via ExerciseList */}
-            </select>
-            <textarea
-              className="w-full p-2 mb-4 border rounded"
-              placeholder="Votre réponse (facultatif)"
-              value={submissionContent}
-              onChange={(e) => setSubmissionContent(e.target.value)}
-            />
-            <input
-              type="file"
-              className="w-full mb-4"
-              onChange={(e) => setSubmissionFile(e.target.files[0])}
-            />
-            <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-              Soumettre
-            </button>
-          </form>
-        </div>
+        <>
+          <div className="bg-white p-4 rounded shadow-md mb-6">
+            <h2 className="text-xl font-semibold mb-2">Soumettre un exercice</h2>
+            <form onSubmit={handleSubmitExercise}>
+              <select
+                className="w-full p-2 mb-4 border rounded"
+                onChange={(e) => setSelectedExercise(e.target.value)}
+              >
+                <option value="">Sélectionnez un exercice</option>
+                {/* À remplir dynamiquement via ExerciseList */}
+              </select>
+              <textarea
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Votre réponse (facultatif)"
+                value={submissionContent}
+                onChange={(e) => setSubmissionContent(e.target.value)}
+              />
+              <input
+                type="file"
+                className="w-full mb-4"
+                onChange={(e) => setSubmissionFile(e.target.files[0])}
+              />
+              <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                Soumettre
+              </button>
+            </form>
+          </div>
+          <ExerciseList onSelectExercise={(id) => setSelectedExercise(id)} />
+          <SubmissionHistory />
+        </>
       )}
-      <ExerciseList onSelectExercise={(id) => setSelectedExercise(id)} />
-      {!user.is_professor && <SubmissionHistory />}
-      
     </div>
   );
 }

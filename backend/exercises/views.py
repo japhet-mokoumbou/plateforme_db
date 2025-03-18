@@ -88,3 +88,33 @@ class SubmissionListView(APIView):
         submissions = Submission.objects.filter(student=request.user)
         serializer = SubmissionSerializer(submissions, many=True)
         return Response(serializer.data)
+    
+
+class ProfessorSubmissionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_professor:
+            return Response({'error': 'Seuls les professeurs peuvent voir les soumissions'}, status=403)
+        # Récupérer les soumissions pour les exercices créés par ce professeur
+        submissions = Submission.objects.filter(exercise__created_by=request.user)
+        serializer = SubmissionSerializer(submissions, many=True)
+        return Response(serializer.data)
+
+class SubmissionUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, submission_id):
+        if not request.user.is_professor:
+            return Response({'error': 'Seuls les professeurs peuvent modifier les soumissions'}, status=403)
+        try:
+            submission = Submission.objects.get(id=submission_id, exercise__created_by=request.user)
+        except Submission.DoesNotExist:
+            return Response({'error': 'Soumission non trouvée ou non autorisée'}, status=404)
+        
+        grade = request.data.get('grade', submission.grade)
+        feedback = request.data.get('feedback', submission.feedback)
+        submission.grade = grade
+        submission.feedback = feedback
+        submission.save()
+        return Response(SubmissionSerializer(submission).data)
