@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ExerciseList from './ExerciseList';
 import SubmissionHistory from './SubmissionHistory';
 import ProfessorDashboard from './ProfessorDashboard';
+import StudentStats from './StudentStats';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -139,7 +140,7 @@ function Dashboard() {
                 Créer
               </button>
             </form>
-          </div>
+            </div>
           <ProfessorDashboard />
         </>
       ) : (
@@ -158,23 +159,24 @@ function Dashboard() {
                 placeholder="Votre requête SQL ou réponse (facultatif)"
                 value={submissionContent}
                 onChange={(e) => setSubmissionContent(e.target.value)}
-              />
-              <input
-                type="file"
-                className="w-full mb-4"
-                onChange={(e) => setSubmissionFile(e.target.files[0])}
-              />
-              <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                Soumettre
-              </button>
-            </form>
-          </div>
-          <ExerciseList onSelectExercise={(id) => setSelectedExercise(id)} />
-          <SubmissionHistory />
-        </>
-      )}
-    </div>
-  );
+                />
+                <input
+                  type="file"
+                  className="w-full mb-4"
+                  onChange={(e) => setSubmissionFile(e.target.files[0])}
+                />
+                <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                  Soumettre
+                </button>
+              </form>
+            </div>
+            <ExerciseList onSelectExercise={(id) => setSelectedExercise(id)} />
+            <StudentStats />
+            <SubmissionHistory />
+          </>
+        )}
+      </div>
+    );             
 }
 
 export default Dashboard;

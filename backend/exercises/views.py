@@ -10,6 +10,7 @@ from .serializers import ExerciseSerializer, SubmissionSerializer
 import sqlite3
 import sqlparse
 from django.db import connections
+from django.db.models import Avg, Count
 
 
 # Fonction pour extraire le texte d’un PDF
@@ -165,3 +166,35 @@ class SubmissionUpdateView(APIView):
         submission.feedback = feedback
         submission.save()
         return Response(SubmissionSerializer(submission).data)
+    
+class StudentStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_student:
+            return Response({'error': 'Seuls les étudiants peuvent voir leurs statistiques'}, status=403)
+        submissions = Submission.objects.filter(student=request.user)
+        stats = {
+            'total_submissions': submissions.count(),
+            'average_grade': submissions.aggregate(Avg('grade'))['grade__avg'] or 0,
+            'completed_exercises': submissions.filter(grade__isnull=False).count(),
+        }
+        return Response(stats)
+    
+class ProfessorStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_professor:
+            return Response({'error': 'Seuls les professeurs peuvent voir les statistiques'}, status=403)
+        exercises = Exercise.objects.filter(created_by=request.user)
+        stats = []
+        for exercise in exercises:
+            submissions = Submission.objects.filter(exercise=exercise)
+            stats.append({
+                'exercise_title': exercise.title,
+                'total_submissions': submissions.count(),
+                'average_grade': submissions.aggregate(Avg('grade'))['grade__avg'] or 0,
+                'success_rate': submissions.filter(grade__gte=5).count() / max(submissions.count(), 1) * 100,
+            })
+        return Response(stats)
