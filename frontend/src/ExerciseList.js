@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function ExerciseList() {
+function ExerciseList({ onSelectExercise }) {
   const [exercises, setExercises] = useState([]);
   const [error, setError] = useState('');
 
@@ -30,6 +30,14 @@ function ExerciseList() {
           <h3 className="text-xl">{exercise.title}</h3>
           <p>{exercise.description}</p>
           <p className="text-gray-500">Créé par : {exercise.created_by.username}</p>
+          {onSelectExercise && (
+            <button
+              onClick={() => onSelectExercise(exercise.id)}
+              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Sélectionner
+            </button>
+          )}
         </div>
       ))}
     </div>

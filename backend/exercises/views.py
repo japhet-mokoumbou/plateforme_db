@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Exercise, Submission
 from .serializers import ExerciseSerializer, SubmissionSerializer
 
+
 # Fonction pour extraire le texte d’un PDF
 def extract_text_from_pdf(file_path):
     with open(file_path, 'rb') as file:
@@ -77,3 +78,13 @@ class SubmissionCreateView(APIView):
             submission.save()
             return Response(SubmissionSerializer(submission).data, status=201)
         return Response(serializer.errors, status=400)
+    
+class SubmissionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_student:
+            return Response({'error': 'Seuls les étudiants peuvent voir leurs soumissions'}, status=403)
+        submissions = Submission.objects.filter(student=request.user)
+        serializer = SubmissionSerializer(submissions, many=True)
+        return Response(serializer.data)

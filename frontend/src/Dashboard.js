@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ExerciseList from './ExerciseList';
+import SubmissionHistory from './SubmissionHistory';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -138,7 +139,7 @@ function Dashboard() {
               onChange={(e) => setSelectedExercise(e.target.value)}
             >
               <option value="">Sélectionnez un exercice</option>
-              {/* Remplir dynamiquement via ExerciseList */}
+              {/* À remplir dynamiquement via ExerciseList */}
             </select>
             <textarea
               className="w-full p-2 mb-4 border rounded"
@@ -157,7 +158,9 @@ function Dashboard() {
           </form>
         </div>
       )}
-      <ExerciseList />
+      <ExerciseList onSelectExercise={(id) => setSelectedExercise(id)} />
+      {!user.is_professor && <SubmissionHistory />}
+      
     </div>
   );
 }
