@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function ProfessorDashboard() {
   const [submissions, setSubmissions] = useState([]);
@@ -34,6 +38,32 @@ function ProfessorDashboard() {
     };
     fetchData();
   }, []);
+
+  const chartData = {
+    labels: stats.map(stat => stat.exercise_title),
+    datasets: [
+      {
+        label: 'Note moyenne',
+        data: stats.map(stat => stat.average_grade),
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 10,
+      },
+    },
+    plugins: {
+      legend: { display: true },
+      title: { display: true, text: 'Notes moyennes par exercice' },
+    },
+  };
 
   const handleUpdate = async (submissionId) => {
     const token = localStorage.getItem('token');
@@ -81,8 +111,9 @@ function ProfessorDashboard() {
       {stats.length > 0 && (
         <div className="bg-white p-4 mb-6 rounded shadow-md">
           <h3 className="text-xl font-semibold mb-2">Statistiques des exercices</h3>
+          <Bar data={chartData} options={chartOptions} />
           {stats.map((stat, index) => (
-            <div key={index} className="mb-2">
+            <div key={index} className="mt-4">
               <p><strong>{stat.exercise_title}</strong></p>
               <p>Total des soumissions : {stat.total_submissions}</p>
               <p>Note moyenne : {stat.average_grade.toFixed(2)} / 10</p>
